@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"moduleResolution": "NodeNext",
+		"target": "ESNext",
+		"lib": ["es2020", "dom"],
+		"module": "esnext",
+		"strict": true,
+		"outDir": "package",
+		"declaration": true,
+		"baseUrl": "source",
+		"allowJs": true
+	},
+	"include": ["source", "tests"]
+}
