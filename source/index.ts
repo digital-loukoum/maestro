@@ -6,5 +6,5 @@ export function parse(
 	input: string,
 	options?: SourceBuildOptions<SourceOutputs>
 ): Maestro.Ast {
-	return untypedParse(input, options)
+	return untypedParse(input.endsWith("\n") ? input : input + "\n", options)
 }

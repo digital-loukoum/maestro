@@ -1,52 +1,54 @@
 export namespace Maestro {
-	export type Ast = Array<Declaration>
+	export type Ast = Array<Section>
 
-	export type Declaration = {
-		identifier: string
-		rules: Rules
+	export type Section = {
+		type: "Section"
+		name: string
+		rules: Array<RuleDeclaration>
 	}
 
-	export type Expression =
-		| Number
-		| Literal
-		| Identifier
-		| Property
-		| Literal
-		| Identifier
-		| Function
+	export type RuleDeclaration = {
+		type: "RuleDeclaration"
+		identifier: string
+		rule: Rule
+	}
 
-	export type Rules = Array<Expression>
+	export type Expression = keyof Expressions
+
+	export type Expressions = {
+		Number: {
+			type: "Number"
+			value: number
+		}
+
+		Literal: {
+			type: "Literal"
+			value: string
+		}
+
+		Identifier: {
+			type: "Identifier"
+			name: string
+		}
+
+		Function: {
+			type: "Function"
+			name: string
+			arguments: Array<FunctionArgument>
+		}
+
+		Property: {
+			type: "Property"
+			name: string
+			operator: ":" | "<<"
+			rules: Rule
+		}
+	}
+
+	export type Rule = Array<Expression>
 
 	export type FunctionArgument = {
 		name?: string
 		value: Expression
-	}
-
-	export type Number = {
-		type: "Number"
-		value: number
-	}
-
-	export type Literal = {
-		type: "Literal"
-		value: string
-	}
-
-	export type Identifier = {
-		type: "Identifier"
-		name: string
-	}
-
-	export type Function = {
-		type: "Function"
-		name: string
-		arguments: Array<FunctionArgument>
-	}
-
-	export type Property = {
-		type: "Property"
-		name: string
-		operator: ":" | "<<"
-		rules: Rules
 	}
 }

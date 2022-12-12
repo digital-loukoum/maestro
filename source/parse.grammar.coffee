@@ -1,8 +1,8 @@
 start
-  = declarations
+  = sections
 
-declarations "declarations"
-  = (_ "\n")* head:declaration? tail:((_ "\n")+ @declaration)* { return (head ? [head] : []).concat(tail) }
+sections "sections"
+  = (_ "\n")* head:Section? tail:((_ "\n")+ @Section)* { return (head ? [head] : []).concat(tail) }
 
 _ "space"
   = [ \t]*
@@ -19,10 +19,13 @@ Number "Number"
 Identifier "Identifier"
   = name:identifier { return { type: "Identifier", name } }
 
-declaration "declaration"
-  = identifier:identifier _ "=" _ rules:rules { return { identifier, rules } }
+Section "Section"
+  = "[" _ name:identifier _ "]" _ "\n" rules:((_ "\n")* @RuleDeclaration _ "\n")* { return { type: "Section", name, rules } }
 
-rules "rules"
+RuleDeclaration "RuleDeclaration"
+  = identifier:identifier _ "=" _ rule:rule { return { type: "RuleDeclaration", identifier, rule } }
+
+rule "rule"
   = _ head:expression tail:(_ @expression)* { return [head, ...tail] }
 
 expression "expression"
@@ -37,7 +40,7 @@ argument "argument"
   / value:expression { return { value, name: undefined } }
 
 Property "Property"
-  = "{" _ name:identifier _ operator:(":" / "<<") _ rules:rules _ "}" { return { type: "Property", name, operator, rules } }
+  = "{" _ name:identifier _ operator:(":" / "<<") _ rule:rule _ "}" { return { type: "Property", name, operator, rule } }
 
 Function "Function"
   = name:identifier _ "(" _ head:argument? _ tail:(_ "," _ @argument)* ")" { return { type: "Function", name, arguments: (head ? [head] : []).concat(tail) } }

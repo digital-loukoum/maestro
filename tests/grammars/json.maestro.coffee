@@ -1,7 +1,9 @@
+[tokens]
 string = between('"', '"', `\`)
-number = createNumberExpression()
+number = createNumberToken()
 boolean = either("true", "false")
 
+[nodes]
 String = { value: string }
 Number = { value: number }
 Boolean = { value: boolean }
@@ -12,4 +14,5 @@ Property = { key: string } ":" { value: expression }
 Object = "{" list({ properties << Property }) "}"
 Array = "[" list({ items << expression }) "]"
 
+[expressions]
 expression = either(String, Number, Boolean, Null, Undefined, Object, Array)

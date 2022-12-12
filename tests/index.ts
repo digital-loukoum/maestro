@@ -1,3 +1,4 @@
+import { createParser } from "createParser.js"
 import { readFileSync } from "fs"
 
 import { parse } from "index.js"
@@ -7,3 +8,5 @@ const file = readFileSync("tests/grammars/simple.maestro.coffee", "utf-8")
 
 const ast = parse(file)
 console.log(inspect(ast, { depth: null, colors: true }))
+
+const parser = createParser(ast)
