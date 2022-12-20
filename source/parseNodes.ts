@@ -1,13 +1,12 @@
 import { Maestro } from "Maestro.js"
 
-export type NodeDeclarations = Array<NodeDeclaration>
 export type NodeDeclaration = {
 	name: string
 	rule: Maestro.Rule
 }
 
-export function parseNodes(ast: Maestro.Ast): NodeDeclarations {
-	const nodes: NodeDeclarations = []
+export function parseNodes(ast: Maestro.Ast): Array<NodeDeclaration> {
+	const nodes: Array<NodeDeclaration> = []
 
 	ast.forEach(section => {
 		if (section.name != "nodes") return

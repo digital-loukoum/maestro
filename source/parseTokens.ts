@@ -1,14 +1,13 @@
 import { Maestro } from "Maestro.js"
 
-export type TokenDeclarations = Array<TokenDeclaration>
 export type TokenDeclaration = {
 	name: string
 	rule: Maestro.Rule
 	anonymous?: boolean
 }
 
-export function parseTokens(ast: Maestro.Ast): TokenDeclarations {
-	const tokens: TokenDeclarations = []
+export function parseTokens(ast: Maestro.Ast): Array<TokenDeclaration> {
+	const tokens: Array<TokenDeclaration> = []
 
 	ast.forEach(section => {
 		// we list all declared tokens

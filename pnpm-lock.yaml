@@ -3,12 +3,14 @@ lockfileVersion: 5.4
 specifiers:
   '@digitak/esrun': ^3.2.15
   '@types/node': ^18.11.12
+  bun-types: ^0.3.0
   chokidar-cli: ^3.0.0
   peggy: ^2.0.1
 
 dependencies:
   '@digitak/esrun': 3.2.15
   '@types/node': 18.11.12
+  bun-types: 0.3.0
   peggy: 2.0.1
 
 devDependencies:
@@ -72,6 +74,10 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       fill-range: 7.0.1
+
+  /bun-types/0.3.0:
+    resolution: {integrity: sha512-cn9ApQi1nppfTzrpqRCVIkkSyrRmV/RUik9c4FBY0Fet9Jnl4ANcDW/z9m/pM/glC7b9e3WChEtAmo9etHpTbQ==}
+    dev: false
 
   /camelcase/5.3.1:
     resolution: {integrity: sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==}

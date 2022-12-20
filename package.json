@@ -12,16 +12,17 @@
 	"license": "MIT",
 	"homepage": "https://github.com/digital-loukoum/mastrio#readme",
 	"scripts": {
-		"dev": "bun run watch:parser & esrun --watch=tests/**/*.maestro.coffee tests/index.ts",
+		"dev": "bun run watch:parser & bun run tests/index.ts & chokidar 'source/parse.grammar.coffee' 'tests/**/*.maestro.coffee' 'source/**/*.ts' 'tests/**/*.ts' -c 'bun run tests/index.ts'",
 		"generate:parser": "peggy source/parse.grammar.coffee --output source/parse.js --format es",
 		"watch:parser": "bun run generate:parser && chokidar source/parse.grammar.coffee -c 'bun run generate:parser'"
 	},
 	"devDependencies": {
+		"@digitak/esrun": "^3.2.15",
+		"@types/node": "^18.11.12",
+		"bun-types": "^0.3.0",
 		"chokidar-cli": "^3.0.0"
 	},
 	"dependencies": {
-		"@digitak/esrun": "^3.2.15",
-		"@types/node": "^18.11.12",
 		"peggy": "^2.0.1"
 	}
 }

@@ -3,6 +3,7 @@
 		"moduleResolution": "NodeNext",
 		"target": "ESNext",
 		"lib": ["es2020", "dom"],
+		"types": ["bun-types"],
 		"module": "esnext",
 		"strict": true,
 		"outDir": "package",

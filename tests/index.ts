@@ -1,12 +1,11 @@
-import { createParser } from "createParser.js"
-import { readFileSync } from "fs"
-
+import { generateGrammar } from "generators/generateGrammar.js"
 import { parse } from "index.js"
 import { inspect } from "util"
 
-const file = readFileSync("tests/grammars/simple.maestro.coffee", "utf-8")
+const file = await Bun.file("tests/test.maestro.coffee").text()
 
 const ast = parse(file)
-console.log(inspect(ast, { depth: null, colors: true }))
+// console.log(inspect(ast, { depth: null, colors: true }))
 
-const parser = createParser(ast)
+const grammar = generateGrammar(ast)
+console.log(inspect(grammar, { depth: null, colors: true }))

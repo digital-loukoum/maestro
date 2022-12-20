@@ -1,0 +1,3 @@
+o Should normalize all expressions with a "data" parameter.
+  The data should be sent to the matcher function.
+  -> It means I have to rewrite the AST.

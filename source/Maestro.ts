@@ -1,6 +1,24 @@
 export namespace Maestro {
 	export type Ast = Array<Section>
 
+	export type Target = "ts" | "js" | "js-pure" | "zig" | "native"
+
+	export type TokenMatcher = {
+		name: string
+		match: () => number // length of the token
+		anonymous?: boolean
+	}
+
+	export type NodeMatcher = {
+		name: string
+		match: () => any
+	}
+
+	export type Grammar = {
+		tokens: Array<TokenMatcher>
+		nodes: Array<NodeMatcher>
+	}
+
 	export type Section = {
 		type: "Section"
 		name: string
@@ -13,7 +31,7 @@ export namespace Maestro {
 		rule: Rule
 	}
 
-	export type Expression = keyof Expressions
+	export type Expression = Expressions[keyof Expressions]
 
 	export type Expressions = {
 		Number: {

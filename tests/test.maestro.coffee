@@ -1,0 +1,2 @@
+[nodes]
+hello = "hello" "world"

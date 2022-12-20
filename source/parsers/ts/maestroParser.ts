@@ -1,8 +1,8 @@
 import { Maestro } from "Maestro.js"
-import { NodeDeclarations } from "parseNodes.js"
-import { TokenDeclarations } from "parseTokens.js"
 
 export type MatchKind = "token" | "node"
+
+export type ParserInput = string | Uint8Array
 
 export type Token = {
 	type: "Token"
@@ -12,26 +12,10 @@ export type Token = {
 	value: string | Uint8Array
 }
 
-export type TokenMatcher = {
-	name: string
-	match: () => number // length of the token
-	anonymous?: boolean
-}
-
-export type NodeMatcher = {
-	name: string
-	match: () => any
-}
-
-export type MaestroGrammar = {
-	tokens: Array<TokenMatcher>
-	nodes: Array<NodeMatcher>
-}
-
 export type Matchers = Record<
 	MatchKind,
 	{
-		[Key in Maestro.Expression]: (expression: Maestro.Expressions[Key]) => number
+		[Key in Maestro.Expression["type"]]: (expression: Maestro.Expressions[Key]) => number
 	}
 >
 
@@ -39,78 +23,99 @@ export type Node = {
 	type: string
 	start: number
 	stop: number
-	value: string | Uint8Array
+	value: ParserInput
 }
 
-export function maestroParser(grammar: MaestroGrammar) {
-	return (input: string | Uint8Array) => {
-		let nodes: Array<Node> = []
-		let tokens: Array<Token> = []
-		let characterCursor = 0
-		let tokenCursor = 0
+export class FooParser {
+	input!: ParserInput
+	nodes: Array<Node> = []
+	tokens: Array<Token> = []
+	characterCursor = 0
+	tokenCursor = 0
 
-		function getNextToken(): Token {
-			if (tokenCursor < tokens.length) {
-				return tokens[tokenCursor]
-			}
-			let tokenLength = 0
-			let name = ""
-			for (const tokenMatcher of grammar.tokens) {
-				if ((tokenLength = tokenMatcher.match())) {
-					name = tokenMatcher.name
-					break
-				}
-			}
-			if (!tokenLength) {
-				throw new Error("Could not find token")
-			}
+	// the grammar is replaced at compile-time
+	grammar!: Maestro.Grammar
 
-			const start = characterCursor
-			const stop = start + tokenLength
-			characterCursor = stop
-
-			const nextToken: Token = {
-				type: "Token",
-				name,
-				start,
-				stop,
-				value: input.slice(start, stop),
-			}
-			tokens.push(nextToken)
-			return nextToken
-		}
-
-		const rootNode = grammar.nodes.find(node => node.name == "root")
-
-		const matchers: Matchers = {
-			token: {
-				Literal: ({ value }) => {
-					let length = 0
-					while (
-						length < value.length &&
-						input[characterCursor + length] == value[length]
-					) {
-						length++
-					}
-					return length
-				},
-				Function: () => 0,
-				Identifier: () => 0,
-				Number: () => 0,
-				Property: () => 0,
-			},
-			node: {
-				Literal: ({ value }) => {
-					const nextToken = getNextToken()
-					return nextToken.name == value ? 1 : 0
-				},
-				Function: () => 0,
-				Identifier: () => 0,
-				Number: () => 0,
-				Property: () => 0,
-			},
-		}
-
+	parse(input: ParserInput) {
+		this.input = input
+		const rootNode = this.grammar.nodes.find(node => node.name == "root")
 		return rootNode?.match()
+	}
+
+	protected getNextToken(): Token {
+		if (this.tokenCursor < this.tokens.length) {
+			return this.tokens[this.tokenCursor]
+		}
+		let tokenLength = 0
+		let name = ""
+		for (const tokenMatcher of this.grammar.tokens) {
+			if ((tokenLength = tokenMatcher.match())) {
+				name = tokenMatcher.name
+				break
+			}
+		}
+		if (!tokenLength) {
+			throw new Error("Could not find token")
+		}
+
+		const start = this.characterCursor
+		const stop = start + tokenLength
+		this.characterCursor = stop
+
+		const nextToken: Token = {
+			type: "Token",
+			name,
+			start,
+			stop,
+			value: this.input.slice(start, stop),
+		}
+		this.tokens.push(nextToken)
+		return nextToken
+	}
+
+	/**
+	 * TOKEN MATCHERS
+	 */
+	matchTokenLiteral({ value }: Maestro.Expressions["Literal"]) {
+		let length = 0
+		while (
+			length < value.length &&
+			this.input[this.characterCursor + length] == value[length]
+		) {
+			length++
+		}
+		return length
+	}
+	matchTokenFunction() {
+		return 0
+	}
+	matchTokenIdentifier() {
+		return 0
+	}
+	matchTokenNumber() {
+		return 0
+	}
+	matchTokenProperty() {
+		return 0
+	}
+
+	/**
+	 * NODE MATCHERS
+	 */
+	matchNodeLiteral({ value }: Maestro.Expressions["Literal"]) {
+		const nextToken = this.getNextToken()
+		return nextToken.name == value ? 1 : 0
+	}
+	matchNodeFunction() {
+		return 0
+	}
+	matchNodeIdentifier() {
+		return 0
+	}
+	matchNodeNumber() {
+		return 0
+	}
+	matchNodeProperty() {
+		return 0
 	}
 }
