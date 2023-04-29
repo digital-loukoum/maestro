@@ -1,7 +1,7 @@
 export namespace Maestro {
 	export type Ast = Array<Section>
 
-	export type Target = "ts" | "js" | "js-pure" | "zig" | "native"
+	export type Target = "ts" | "js" | "js-pure" | "zig" | "native" | "wasm"
 
 	export type TokenMatcher = {
 		name: string

@@ -8,13 +8,16 @@ Import "import" -> * :identifier "from" :string
 # this is closer to what the program actually does
 # BUT! Issue with multiple branches (what if the same token '+' could produce two different nodes?)
 
-#1 <node name> = <expression>
+#2 <node name> = <expression>
+[nodes]
 Number = value:number # trigger: number
 String = value:string # trigger: string
 Addition = left:Expression "+" right:Expression # trigger: "+"
 ToNumber = "+" right:Expression # trigger: "+"
 Multiplication = left:Expression "*" right:Expression # trigger: "*"
 Import = "import" :identifier "from" :string # trigger: "import"
+
+[expressions]
 Expression = Number | String | Addition | ToNumber | Multiplication
 # it's "implicit" declaration
 # here, the first encountered token is used as a trigger
