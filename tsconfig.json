@@ -1,15 +1,25 @@
 {
 	"compilerOptions": {
 		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
 		"target": "ESNext",
-		"lib": ["es2020", "dom"],
-		"types": ["bun-types"],
-		"module": "esnext",
+		"lib": [
+			"es2020",
+			"dom"
+		],
+		"types": [
+			"bun-types"
+		],
 		"strict": true,
 		"outDir": "package",
 		"declaration": true,
 		"baseUrl": "source",
 		"allowJs": true
 	},
-	"include": ["source", "tests"]
+	"include": [
+		"source",
+		"source-v2",
+		"tests",
+		"sandbox/peggy/parse.js"
+	]
 }

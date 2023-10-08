@@ -1,6 +1,6 @@
 import { Maestro } from "Maestro.js"
 import type { SourceBuildOptions, SourceOutputs } from "peggy"
-import { parse as untypedParse } from "./parse.js"
+import { parse as untypedParse } from "../sandbox/peggy/parse.js"
 
 export type { Maestro }
 
