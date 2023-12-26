@@ -1,112 +1,266 @@
-import { Context, Grammar, Node, Parsable, Slot, Token } from "./types"
+export type Parsable = ArrayLike<unknown>
 
-export function parserV3<Input extends Parsable>(grammar: Grammar<Input>) {
-	return (input: Input): Node<unknown> | undefined => {
-		const nodes: Array<Node<unknown>> = [] // should be a very small array, containing 2 elements max 99% of the time
-		const rightestSlots: Array<Slot> = [] // this array can grow quite much
-		// let token: Token | undefined = undefined
-		let node: Node<unknown> | undefined = undefined
-		// let slot: Node<unknown> | undefined = undefined
-		// const scopes: Array<Scope> = []
-		// let currentScope: Scope | undefined = undefined
-		// let noAvailableSlot = true
+export type Grammar<Input extends Parsable> = Array<Rule<Input>>
 
-		const context: Context<Input> = {
-			input,
-			start: 0,
-			useLeftNode,
-			useRightNode,
+export type Rule<Input extends Parsable> = () => undefined | Node
+
+abstract class Node {
+	constructor(
+		public name: string,
+		public start: number,
+		public end: number,
+		public parent?: Node
+	) {}
+
+	left() {
+		return 0
+	}
+	right() {
+		return 0
+	}
+	list() {
+		return false
+	}
+	takeLeft(node: Node) {}
+	takeRight(node: Node) {}
+
+	replaceLastChildWith(node: Node): Node {
+		throw new Error(`Cannot replace child of node with no children`)
+	}
+
+	isPrimitive() {
+		return this.left() == 0 && this.right() == 0
+	}
+}
+
+function toPOJO(value: any): any {
+	if (!value) {
+		return value
+	} else if (value instanceof Array) {
+		return value.map(toPOJO)
+	} else if (typeof value == "object") {
+		const isNode = value instanceof Node
+		const result: Record<string, any> = {}
+		for (const key in value) {
+			if (isNode && (key == "parent" || key == "start" || key == "end")) {
+				continue
+			}
+			const property = value[key as keyof typeof value]
+			if (typeof property == "function") {
+				continue
+			}
+			result[key] = toPOJO(property)
 		}
+		return result
+	}
+	return value
+}
 
-		skipWhitespaces()
+abstract class ListNode extends Node {
+	children = new Array<Node>()
 
-		while (context.start < input.length) {
-			// console.log("scopes", scopes)
-			// noAvailableSlot = currentScope == undefined
+	abstract left(): number
+	abstract right(): number
 
-			// 1. we find the next token
-			for (const rule of grammar) {
-				node = rule(context)
-				if (node) break
-			}
-			if (!node) {
-				throw new Error(`Unexpected character at position ${context.start}`)
-			}
+	takeLeft(node: Node) {
+		this.children.push(node)
+	}
 
-			context.start = node.end
-			const rightestSlot = rightestSlots[rightestSlots.length - 1]
+	takeRight(node: Node) {
+		this.children.push(node)
+	}
 
-			// 3. we add the node to the AST
-			if (isSlotAvailable(rightestSlot)) {
-				console.log("Slot available", nodes, rightestSlots)
-				Object.assign(rightestSlot.node, node)
-			} else {
-				nodes.push(node)
-				rightestSlots.push({ node, priority: 0 })
-			}
+	list() {
+		return true
+	}
 
+	replaceLastChildWith(node: Node) {
+		const lastChild = this.children[this.children.length - 1]
+		this.children[this.children.length - 1] = node
+		return lastChild
+	}
+}
+
+class NumberNode extends Node {
+	constructor(start: number, end: number, public value: number) {
+		super("Number", start, end)
+	}
+}
+
+class AdditionNode extends ListNode {
+	constructor(start: number, end: number) {
+		super("Addition", start, end)
+	}
+	left() {
+		return 20
+	}
+	right() {
+		return 20
+	}
+}
+
+class MultiplicationNode extends ListNode {
+	constructor(start: number, end: number) {
+		super("Multiplication", start, end)
+	}
+	left() {
+		return 30
+	}
+	right() {
+		return 30
+	}
+}
+
+class PositiveValueNode extends Node {
+	child: Node | undefined = undefined
+
+	constructor(start: number, end: number) {
+		super("PositiveValue", start, end)
+	}
+
+	right() {
+		return this.child ? 0 : 20
+	}
+	takeRight(node: Node) {
+		this.child = node
+	}
+	replaceLastChildWith(node: Node): Node {
+		const lastChild = this.child
+		if (!lastChild) {
+			throw new Error(`Cannot replace child of node with no children`)
+		}
+		this.child = node
+		return lastChild
+	}
+}
+
+export function parserV3<Input extends Parsable>() {
+	return (input: string): Node | undefined => {
+		/**
+		 * The root node is the ancestor of all other nodes
+		 */
+		let rootNode!: Node
+
+		/**
+		 * Rightmost node is the current node
+		 */
+		let currentNode: Node | undefined = undefined
+		let start = 0
+		let end = 0
+
+		do {
+			start = end
 			skipWhitespaces()
-		}
 
-		return nodes[0]
+			if (start >= input.length) {
+				break
+			}
+
+			// --> NumberToken <-- //
+			while (input[end] >= "0" && input[end] <= "9") {
+				// console.log(input[end])
+				end++
+			}
+			if (end > start) {
+				if (addNode(new NumberNode(start, end, Number(input.slice(start, end))))) {
+					continue
+				}
+				throw new Error(`Error with number token`)
+			}
+
+			// --> AdditionToken <-- //
+			if (input[start] == "+") {
+				end++
+				if (
+					addNode(new AdditionNode(start, end)) ||
+					addNode(new PositiveValueNode(start, end))
+				) {
+					continue
+				}
+				throw new Error(`Error with '+' token`)
+			}
+
+			if (input[start] == "*") {
+				end++
+				if (addNode(new MultiplicationNode(start, end))) {
+					continue
+				}
+				throw new Error(`Error with '*' token`)
+			}
+		} while (true)
+
+		console.log("AST", toPOJO(rootNode))
+		return rootNode
 
 		// -- UTILITY FUNCTIONS -- //
 		function skipWhitespaces() {
-			while (input[context.start] == " ") {
-				context.start++
+			while (input[start] == " ") {
+				start++
 			}
+			end = start
 		}
 
-		function useLeftNode(
-			priority: number
-		): Node<unknown> | undefined {
-			if (rightestSlots.length == 0) {
-				throw new Error("No left node to use")
+		function addNode(node: Node): boolean {
+			if (!currentNode || !rootNode) {
+				rootNode = node
+				currentNode = node
+				return true
 			}
 
-			for (let index = rightestSlots.length - 1; index >= 0; index--) {
-				const rightestSlot = rightestSlots[index]
-				if (isSlotAvailable(rightestSlot)) {
-					throw new Error("TODO: isSlotAvailable(rightestSlot)")
-				}
-				if (priority > rightestSlot.priority) {
-					// we found our left node
-					const leftNode = { ...rightestSlot.node as Node<unknown> };
-					(rightestSlot.node as any).name = undefined; // we make the slot available
-					return leftNode
-				}
-			}
+			const right = currentNode.right()
+			const left = node.left()
 
-			console.log("Using left node. Rightest slot:", rightestSlot)
+			if (right == 0 && left == 0) {
+				// conflict: no node can take each other
+				return false
+			} else if (right > 0 && left > 0) {
+				// conflict: both nodes want to take each other
+				return false
+			} else if (left > 0) {
+				const weakerParent = findFirstWeakerParent(left)
+				if (!weakerParent) {
+					// 1 * 2 + 3
+					// *(1, 2)       --       rootNode: *, currentNode: 2
+					// +(*(1, 2), ?) --       rootNode: +, currentNode: +
+					node.takeLeft(rootNode)
+					rootNode.parent = node
+					rootNode = node
+					currentNode = node // rightmost node, since its right is empty
+				} else {
+					// 1 + 2 * 3
+					// +(1, 2)       --       rootNode: +, currentNode: 2
+					// +(1, *(2, ?)) --       rootNode: +, currentNode: *
 
-			if (isSlotAvailable(rightestSlot)) {
-				throw new Error("TODO: isSlotAvailable(rightestSlot)")
-			} else if (rightestSlot.priority < priority) {
-				// replace the rightmost slot
-				rightestSlots.push({ node, priority })
-				return nodes.pop()
+					// 1 + 2 ** 3 * 4
+					// +(1, 2)       --       rootNode: +, currentNode: 2
+					// +(1, **(2, ?)) --       rootNode: +, currentNode: **
+					// +(1, **(2, 3)) --       rootNode: +, currentNode: 3
+					// +(1, *(**(2, 3), ?)) --       rootNode: +, currentNode: *
+
+					const child = weakerParent.replaceLastChildWith(node)
+					node.takeLeft(child)
+					child.parent = node
+					node.parent = weakerParent
+					currentNode = node
+				}
 			} else {
-				const leftNode = { ...(rightestSlot.node as Node<unknown>) }
-				rightestSlot.node = node
-				rightestSlot.priority = priority
-				return leftNode
+				currentNode.takeRight(node)
+				node.parent = currentNode
+				currentNode = node
 			}
+			return true
 		}
 
-		function useRightNode(priority: number): Node<unknown> | undefined {
-			const node = {}
-			rightestSlots.push({ node, priority })
-			return node as Node<unknown>
-		}
-
-		function isSlotAvailable(slot: Slot | undefined) {
-			return slot && (slot.node as Node<unknown>).name === undefined
-		}
-
-		function emptySlot(slot: Slot) {
-			for (const key in slot.node) {
-				delete slot.node[key]
+		function findFirstWeakerParent(left: number): Node | undefined {
+			let parent = currentNode?.parent
+			while (parent) {
+				const right = parent.right()
+				if (right && right <= left) {
+					return parent
+				}
+				parent = parent.parent
 			}
+			return undefined
 		}
 	}
 }
