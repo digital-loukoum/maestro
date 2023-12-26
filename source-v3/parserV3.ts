@@ -226,6 +226,9 @@ export function parserV3<Input extends Parsable>() {
 					rootNode.parent = node
 					rootNode = node
 					currentNode = node // rightmost node, since its right is empty
+				} else if (weakerParent.name == node.name && node.list()) {
+					// we can add the node to the list
+					currentNode = weakerParent
 				} else {
 					// 1 + 2 * 3
 					// +(1, 2)       --       rootNode: +, currentNode: 2
