@@ -37,16 +37,15 @@ const InputStruct = struct {
     i2: i32,
     i3: i32,
     i4: i32,
+    i5: i32,
+    i6: i32,
+    i7: i32,
+    i8: i32,
 };
 
 
 fn doStuffWithInputStruct(s: *const InputStruct) void {
-	std.debug.print("{} {} {} {}\n", .{
-        .i1 = s.i1,
-        .i2 = s.i2,
-        .i3 = s.i3,
-        .i4 = s.i4,
-    });
+    _ = s.i1 + s.i8;
 }
 
 
@@ -72,7 +71,29 @@ pub fn main() void {
         .i8 = 8,
     };
 
-    doStuffWithInputStruct(@ptrCast( &p));
-    doStuffWithInputStruct(@ptrCast(&u));
+    {
+        const now = std.time.microTimestamp();
+        for (0..1000000) |_| {
+            doStuffWithInputStruct(@ptrCast( &p));
+        }
+        std.debug.print("packed: {}\n", .{std.time.microTimestamp() - now});
+    }
+    
+    {
+        const now = std.time.microTimestamp();
+        for (0..1000000) |_| {
+            doStuffWithInputStruct(&.{
+                .i1 = u.i1,
+                .i2 = u.i2,
+                .i3 = u.i3,
+                .i4 = u.i4,
+                .i5 = u.i5,
+                .i6 = u.i6,
+                .i7 = u.i7,
+                .i8 = u.i8,
+            });
+        }
+        std.debug.print("unpacked: {}\n", .{std.time.microTimestamp() - now});
+    }
+    
 }
-
