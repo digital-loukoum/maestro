@@ -1,80 +1,41 @@
+import { toPOJO } from "./utilities/toPOJO"
+
 export type Parsable = ArrayLike<unknown>
 
 export type Grammar<Input extends Parsable> = Array<Rule<Input>>
 
 export type Rule<Input extends Parsable> = () => undefined | Node
 
-abstract class Node {
-	constructor(
-		public name: string,
-		public start: number,
-		public end: number,
-		public parent?: Node
-	) {}
+export abstract class Node {
+	public abstract readonly name: string
 
-	left() {
-		return 0
-	}
-	right() {
-		return 0
-	}
-	list() {
-		return false
-	}
-	takeLeft(node: Node) {}
-	takeRight(node: Node) {}
+	constructor(public start: number, public end: number, public parent?: Node) {}
 
-	replaceLastChildWith(node: Node): Node {
+	left = () => 0
+	right = () => 0
+	list = () => false
+
+	takeLeft = (node: Node) => {}
+	takeRight = (node: Node) => {}
+
+	replaceLastChildWith = (node: Node): Node => {
 		throw new Error(`Cannot replace child of node with no children`)
 	}
 
-	isPrimitive() {
+	isPrimitive = () => {
 		return this.left() == 0 && this.right() == 0
 	}
-}
-
-function toPOJO(value: any): any {
-	if (!value) {
-		return value
-	} else if (value instanceof Array) {
-		return value.map(toPOJO)
-	} else if (typeof value == "object") {
-		const isNode = value instanceof Node
-		const result: Record<string, any> = {}
-		for (const key in value) {
-			if (isNode && (key == "parent" || key == "start" || key == "end")) {
-				continue
-			}
-			const property = value[key as keyof typeof value]
-			if (typeof property == "function") {
-				continue
-			}
-			result[key] = toPOJO(property)
-		}
-		return result
-	}
-	return value
 }
 
 abstract class ListNode extends Node {
 	children = new Array<Node>()
 
-	abstract left(): number
-	abstract right(): number
+	list = () => true
 
-	takeLeft(node: Node) {
-		this.children.push(node)
-	}
+	takeLeft = node => this.children.push(node)
+	takeRight = (node: Node) => this.children.push(node)
 
-	takeRight(node: Node) {
-		this.children.push(node)
-	}
-
-	list() {
-		return true
-	}
-
-	replaceLastChildWith(node: Node) {
+	replaceLastChildWith = (node: Node) => {
 		const lastChild = this.children[this.children.length - 1]
 		this.children[this.children.length - 1] = node
 		return lastChild
@@ -82,49 +43,33 @@ abstract class ListNode extends Node {
 }
 
 class NumberNode extends Node {
+	name = "Number"
 	constructor(start: number, end: number, public value: number) {
-		super("Number", start, end)
+		super(start, end)
 	}
 }
 
 class AdditionNode extends ListNode {
-	constructor(start: number, end: number) {
-		super("Addition", start, end)
-	}
-	left() {
-		return 20
-	}
-	right() {
-		return 20
-	}
+	name = "Addition"
+	left = () => 20
+	right = () => 20
 }
 
 class MultiplicationNode extends ListNode {
-	constructor(start: number, end: number) {
-		super("Multiplication", start, end)
-	}
-	left() {
-		return 30
-	}
-	right() {
-		return 30
-	}
+	name = "Multiplication"
+	left = () => 30
+	right = () => 30
 }
 
 class PositiveValueNode extends Node {
+	name = "PositiveValue"
 	child: Node | undefined = undefined
 
-	constructor(start: number, end: number) {
-		super("PositiveValue", start, end)
-	}
+	right = () => (this.child ? 0 : 20)
 
-	right() {
-		return this.child ? 0 : 20
-	}
-	takeRight(node: Node) {
-		this.child = node
-	}
-	replaceLastChildWith(node: Node): Node {
+	takeRight = (node: Node) => (this.child = node)
+
+	replaceLastChildWith = (node: Node): Node => {
 		const lastChild = this.child
 		if (!lastChild) {
 			throw new Error(`Cannot replace child of node with no children`)
@@ -148,6 +93,7 @@ export function parserV3<Input extends Parsable>() {
 		let start = 0
 		let end = 0
 
+		// Find the next token, and create the node for it
 		do {
 			start = end
 			skipWhitespaces()
@@ -162,6 +108,7 @@ export function parserV3<Input extends Parsable>() {
 				end++
 			}
 			if (end > start) {
+				// only one node possible: NumberNode
 				if (addNode(new NumberNode(start, end, Number(input.slice(start, end))))) {
 					continue
 				}
@@ -171,6 +118,7 @@ export function parserV3<Input extends Parsable>() {
 			// --> AdditionToken <-- //
 			if (input[start] == "+") {
 				end++
+				// two nodes possible: AdditionNode, PositiveValueNode
 				if (
 					addNode(new AdditionNode(start, end)) ||
 					addNode(new PositiveValueNode(start, end))
@@ -180,8 +128,10 @@ export function parserV3<Input extends Parsable>() {
 				throw new Error(`Error with '+' token`)
 			}
 
+			// --> MultiplicationToken <-- //
 			if (input[start] == "*") {
 				end++
+				// one node possible: MultiplicationNode
 				if (addNode(new MultiplicationNode(start, end))) {
 					continue
 				}

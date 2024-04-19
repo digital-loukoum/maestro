@@ -17,3 +17,14 @@ If a token failed every possible node associated, then there is a syntax error. 
     b. if the current node has lower priority, the left node takes it ("adopt" operation),
     c. if the current node has higher priority, it replaces left node's last child and takes it ("kidnap" operation),
   iii. if the rightmost AST value 
+
+## Todo
+
+[x] Handle primitives
+[x] Handle right operations
+[x] Handle left operations
+[x] Handle precedence rules
+[ ] Allow to give grammars as argument to the parser
+[ ] Allow to give grammars as argument to the parser
+[ ] Handle sub-grammars
+    For example, in the sentence `import X from Y`, we might want `X` and `Y` to follow different rules. 
